@@ -1,0 +1,14 @@
+#!/bin/sh
+
+#make distclean
+
+#./configure --disable-encoders --disable-debug --enable-runtime-cpudetect --disable-pthreads --enable-static --enable-w32threads --enable-memalign-hack
+
+# TODO: --enable-libschroedinger
+# TODO: --enable-libx264 --extra-cflags=-I/local/x264/include --extra-ldflags=-L/local/x264/lib
+
+# use this to build a GPL enabled version (better sw scaler performance, XVID codec (not required to decode xvid movies) and AMR support but the DLL can't be distributed)
+#./configure --disable-debug --disable-encoders --disable-devices --disable-protocols --enable-gpl --enable-version3 --enable-libvorbis --enable-libtheora --enable-libspeex --enable-libmp3lame --enable-libopencore_amrwb --enable-libopencore_amrnb --enable-libvpx --disable-decoder=libvpx --enable-runtime-cpudetect --enable-libxvid --enable-avisynth --enable-w32threads --enable-memalign-hack --enable-static --disable-avfilter --disable-postproc
+
+# build LGPL version
+./configure --disable-debug --disable-encoders --disable-devices --disable-protocols --enable-libvorbis --enable-libtheora --enable-libspeex --enable-libmp3lame --enable-libvpx --disable-decoder=libvpx --enable-runtime-cpudetect --enable-avisynth --enable-w32threads --enable-memalign-hack --enable-static --disable-avfilter --disable-postproc

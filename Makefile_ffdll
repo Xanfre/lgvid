@@ -1,0 +1,17 @@
+include config.mak
+
+INNER_LIBS = libavformat/libavformat.a libavcodec/libavcodec.a libavutil/libavutil.a libswscale/libswscale.a
+
+EXTRALIBS = -ffast-math -lws2_32 -lvfw32 -liconv -lfribidi -lenca -lz -lbz2 -lmad -lspeex -LH:/MinGW/lib -ltheora -logg -la52 -ldca -lfaad -ladvapi32 -lole32 -lstdc++ -lopencore-amrnb -lopencore-amrwb -lxvidcore -lm -lvpx -L/mingw/lib -static
+
+# can use "export-all-symbols" if we don't want to supply a def file with only exports needed by lgvid
+#LDOPTS = -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase -Wl,--export-all-symbols
+LDOPTS = -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase ffmpeg-lgvid.def
+
+
+# libavutil/inverse.o is included in libavcodec.a as well, to avoid duplicate symbols we just remove it from the archive
+# (ld option "-z muldefs" might also work, but the option isn't available on all versions)
+
+ffmpeg.dll : $(INNER_LIBS)
+	ar -d libavcodec/libavcodec.a inverse.o
+	gcc -shared -o $@ $(LDOPTS) -Wl,--whole-archive $(INNER_LIBS) -Wl,--no-whole-archive $(EXTRALIBS)
