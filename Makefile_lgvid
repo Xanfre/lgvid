@@ -2,7 +2,12 @@ include config.mak
 
 INNER_LIBS = libavformat/libavformat.a libavcodec/libavcodec.a libavutil/libavutil.a libswscale/libswscale.a
 
-EXTRALIBS = -ffast-math -lws2_32 -lvfw32 -liconv -lfribidi -lenca -lz -lbz2 -lmad -lspeex -LH:/MinGW/lib -ltheora -logg -la52 -ldca -lfaad -ladvapi32 -lole32 -lstdc++ -lopencore-amrnb -lopencore-amrwb -lxvidcore -lm -lvpx -L/mingw/lib -static
+# Original (mplayer-ww MinGW)
+#EXTRALIBS = -ffast-math -lws2_32 -lvfw32 -liconv -lfribidi -lenca -lz -lbz2 -lmad -lspeex -LH:/MinGW/lib -ltheora -logg -la52 -ldca -lfaad -ladvapi32 -lole32 -lstdc++ -lopencore-amrnb -lopencore-amrwb -lxvidcore -lm -lvpx -L/mingw/lib -static
+# Static (i686-w64-mingw32)
+#EXTRALIBS = -ffast-math -lws2_32 -lvfw32 -liconv -lfribidi -lenca -lz -lbz2 -lmad -lspeex -ltheora -logg -la52 -ldca -lfaad -ladvapi32 -lole32 -lstdc++ -lopencore-amrnb -lopencore-amrwb -l:xvidcore.a -lm -lvpx -L$(LGVID_DEP_PREFIX)/lib -static
+# Dynamic (i686-w64-mingw32)
+EXTRALIBS = -ffast-math -lws2_32 -lvfw32 -liconv -lfribidi -lenca -lz -lbz2 -lmad -lspeex -ltheora -logg -la52 -ldca -lfaad -ladvapi32 -lole32 -lstdc++ -lopencore-amrnb -lopencore-amrwb -l:xvidcore.dll.a -lm -lvpx -L$(LGVID_DEP_PREFIX)/lib
 
 LDOPTS = -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase lgvid.def
 
@@ -12,4 +17,4 @@ lgvid.o: lgvid.cpp
 	$(CC) -I. $(CFLAGS) $(CPPFLAGS) -c $(CC_O) $<
 
 lgvid.dll: lgvid.o $(INNER_LIBS)
-	gcc -shared -o $@ $(LDOPTS) lgvid.o $(INNER_LIBS) $(EXTRALIBS)
+	$(LD) -shared -o $@ $(LDOPTS) lgvid.o $(INNER_LIBS) $(EXTRALIBS)

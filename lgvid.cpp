@@ -197,13 +197,13 @@ namespace FFmpeg
 
 #ifdef FFMPEG_DLL
 	#define INIT_FF_CALL(_name) \
-		if (((void*&)_name = GetProcAddress(hDll, #_name)) == NULL) \
+		if (((void*&)_name = (void*)GetProcAddress(hDll, #_name)) == NULL) \
 		{ \
 			mprintf("failed to resolve FFmpeg call %s", #_name); \
 			goto fail;\
 		}
 	#define INIT_FF_CALL_OPT(_name) \
-		((void*&)_name = GetProcAddress(hDll, #_name))
+		((void*&)_name = (void*)GetProcAddress(hDll, #_name))
 #else
 	#define INIT_FF_CALL(_name) _name = :: _name;
 	#define INIT_FF_CALL_OPT(_name) _name = :: _name;
