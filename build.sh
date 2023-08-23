@@ -20,7 +20,7 @@ cp ../Makefile_ffdll .
 
 patch -Nsp1 < "../patches/lgvid-$FFMPEG.patch"
 
-source ../set-env-vars.sh
+. ../set-env-vars.sh
 
 ./ffmpeg-dll-config
 make -j4

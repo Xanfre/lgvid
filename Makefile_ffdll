@@ -1,17 +1,25 @@
+ifeq ($(USE_FFMPEG_44),)
 include config.mak
+else
+include ffbuild/config.mak
+endif
 
 INNER_LIBS = libavformat/libavformat.a libavcodec/libavcodec.a libavutil/libavutil.a libswscale/libswscale.a
+ifneq ($(USE_FFMPEG_44),)
+	INNER_LIBS += libswresample/libswresample.a
+endif
 
 # Original (mplayer-ww MinGW)
 #EXTRALIBS = -ffast-math -lws2_32 -lvfw32 -liconv -lfribidi -lenca -lz -lbz2 -lmad -lspeex -LH:/MinGW/lib -ltheora -logg -la52 -ldca -lfaad -ladvapi32 -lole32 -lstdc++ -lopencore-amrnb -lopencore-amrwb -lxvidcore -lm -lvpx -L/mingw/lib -static
-# Static (i686-w64-mingw32)
-#EXTRALIBS = -ffast-math -lws2_32 -lvfw32 -liconv -lfribidi -lenca -lz -lbz2 -lmad -lspeex -ltheora -logg -la52 -ldca -lfaad -ladvapi32 -lole32 -lstdc++ -lopencore-amrnb -lopencore-amrwb -l:xvidcore.a -lm -lvpx -L$(LGVID_DEP_PREFIX)/lib -static
-# Dynamic (i686-w64-mingw32)
-EXTRALIBS = -ffast-math -lws2_32 -lvfw32 -liconv -lfribidi -lenca -lz -lbz2 -lmad -lspeex -ltheora -logg -la52 -ldca -lfaad -ladvapi32 -lole32 -lstdc++ -lopencore-amrnb -lopencore-amrwb -lxvidcore -lm -lvpx -L$(LGVID_DEP_PREFIX)/lib
+# i686-w64-mingw32
+EXTRALIBS = -ffast-math -lws2_32 -lvfw32 -liconv -lfribidi -lenca -lz -lbz2 -lmad -lspeex -ltheora -logg -la52 -ldca -lfaad -ladvapi32 -lole32 -lstdc++ -lopencore-amrnb -lopencore-amrwb -l:xvidcore.a -lm -lvpx -L$(LGVID_DEP_PREFIX)/lib -static
 
 # can use "export-all-symbols" if we don't want to supply a def file with only exports needed by lgvid
-#LDOPTS = -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase -Wl,--export-all-symbols
+ifeq ($(USE_FFMPEG_44),)
 LDOPTS = -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase ffmpeg-lgvid.def
+else
+LDOPTS = -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase -Wl,--export-all-symbols
+endif
 
 
 # libavutil/inverse.o is included in libavcodec.a as well, to avoid duplicate symbols we just remove it from the archive
