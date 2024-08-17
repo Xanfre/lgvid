@@ -15,13 +15,43 @@
 #endif
 
 
+#ifdef _WIN32
 #pragma pack(4)
+#endif
+
+#ifndef __cplusplus
+enum
+{
+	LGVID_SEEK_Set,
+	LGVID_SEEK_Cur,
+	LGVID_SEEK_End
+};
+
+typedef struct sLGVidFrameFormat
+{
+	int width;
+	int height;
+	int bpp;
+	unsigned int rmask;
+	unsigned int gmask;
+	unsigned int bmask;
+	BOOL cropped;
+	int croprect[4];
+} sLGVidFrameFormat;
+
+typedef struct sLGVidLockResult
+{
+	char *buffer;
+	int pitch;
+} sLGVidLockResult;
+#endif
 
 // host interface that allows a LGVideoDecoder to access necessary host functions
 #undef INTERFACE
 #define INTERFACE ILGVideoDecoderHost
 DECLARE_INTERFACE(ILGVideoDecoderHost)
 {
+#ifdef __cplusplus
 public:
 	enum
 	{
@@ -53,26 +83,27 @@ public:
 	};
 
 public:
+#endif
 	// get config var value, can be used if decoder has any user configurable settings
-	STDMETHOD_(BOOL,GetConfigValue)(const char *name, char *buffer, int len) PURE;
+	STDMETHOD_(BOOL,GetConfigValue)(THIS_ const char *name, char *buffer, int len) PURE;
 
 	// output string to log (debug output)
-	STDMETHOD_(void,LogPrint)(const char *s) PURE;
+	STDMETHOD_(void,LogPrint)(THIS_ const char *s) PURE;
 
 	//
 	// file I/O
 	//
 
 	// open file, returns a file handle, NULL if failed
-	STDMETHOD_(void*,FileOpen)(const char *filename) PURE;
+	STDMETHOD_(void*,FileOpen)(THIS_ const char *filename) PURE;
 	// close file handle
-	STDMETHOD_(void,FileClose)(void *handle) PURE;
+	STDMETHOD_(void,FileClose)(THIS_ void *handle) PURE;
 	// get file size
-	STDMETHOD_(size_t,FileSize)(void *handle) PURE;
+	STDMETHOD_(size_t,FileSize)(THIS_ void *handle) PURE;
 	// read data from file
-	STDMETHOD_(size_t,FileRead)(void *handle, void *buf, size_t count) PURE;
+	STDMETHOD_(size_t,FileRead)(THIS_ void *handle, void *buf, size_t count) PURE;
 	// move current file read pos
-	STDMETHOD_(size_t,FileSeek)(void *handle, long offset, int origin) PURE;
+	STDMETHOD_(size_t,FileSeek)(THIS_ void *handle, long offset, int origin) PURE;
 
 	//
 	// audio buffer access
@@ -80,32 +111,40 @@ public:
 
 	// create audio buffer for sound playback if video contains audio track (may only be called once per decoder)
 	// (audio data is expected to be 16-bit signed)
-	STDMETHOD_(BOOL,CreateAudioBuffer)(int nSampleRate, int nChannels, int nBufferSize) PURE;
+	STDMETHOD_(BOOL,CreateAudioBuffer)(THIS_ int nSampleRate, int nChannels, int nBufferSize) PURE;
 
 	// load audio data to sound buffer, may only be called from inside RequestAudio (can be called several times)
 	// returns number of bytes actually queued
-	STDMETHOD_(int,QueueAudioData)(void *data, int len) PURE;
+	STDMETHOD_(int,QueueAudioData)(THIS_ void *data, int len) PURE;
 
 	//
 	// video buffer access
 	//
 
 	// get frame buffer format
-	STDMETHOD_(void,GetFrameFormat)(sFrameFormat &fmt) PURE;
+#ifdef __cplusplus
+	STDMETHOD_(void,GetFrameFormat)(THIS_ sFrameFormat &fmt) PURE;
+#else
+	STDMETHOD_(void,GetFrameFormat)(THIS_ sLGVidFrameFormat *fmt) PURE;
+#endif
 
 	// create an image buffer that can be used to store a video frame using LockBuffer/UnlockBuffer
 	// the decoder can create several buffers to queue multiple frame internally
 	// returns handle or NULL if create failed
-	STDMETHOD_(void*,CreateImageBuffer)() PURE;
+	STDMETHOD_(void*,CreateImageBuffer)(THIS) PURE;
 
 	// lock/unlock image buffer so a video frame can be copied to it
-	STDMETHOD_(BOOL,LockBuffer)(void *handle, sLockResult &lock) PURE;
-	STDMETHOD_(void,UnlockBuffer)(void *handle) PURE;
+#ifdef __cplusplus
+	STDMETHOD_(BOOL,LockBuffer)(THIS_ void *handle, sLockResult &lock) PURE;
+#else
+	STDMETHOD_(BOOL,LockBuffer)(THIS_ void *handle, sLGVidLockResult *lock) PURE;
+#endif
+	STDMETHOD_(void,UnlockBuffer)(THIS_ void *handle) PURE;
 
 	// present an image buffer to the host's video frame buffer, may only be called from inside RequestVideoFrame
 	// EndVideoFrame may stall while waiting for vsync if the frame buffer is the screen
-	STDMETHOD_(void,BeginVideoFrame)(void *handle) PURE;
-	STDMETHOD_(void,EndVideoFrame)() PURE;
+	STDMETHOD_(void,BeginVideoFrame)(THIS_ void *handle) PURE;
+	STDMETHOD_(void,EndVideoFrame)(THIS) PURE;
 };
 
 
@@ -114,26 +153,28 @@ public:
 #define INTERFACE ILGVideoDecoder
 DECLARE_INTERFACE(ILGVideoDecoder)
 {
+#ifdef __cplusplus
 public:
+#endif
 	// shut down and delete decoder instance
-	STDMETHOD_(void,Destroy)() PURE;
+	STDMETHOD_(void,Destroy)(THIS) PURE;
 
 	// start decoding for playback
-	STDMETHOD_(BOOL,Start)() PURE;
+	STDMETHOD_(BOOL,Start)(THIS) PURE;
 
 	// returns FALSE as long as video hasn't finished
-	STDMETHOD_(BOOL,IsFinished)() PURE;
+	STDMETHOD_(BOOL,IsFinished)(THIS) PURE;
 
 	// returns TRUE if a video frame is available
-	STDMETHOD_(BOOL,IsVideoFrameAvailable)() PURE;
+	STDMETHOD_(BOOL,IsVideoFrameAvailable)(THIS) PURE;
 
 	// called to request another video frame, data is sent to host with BeginVideoFrame/EndVideoFrame
-	STDMETHOD_(void,RequestVideoFrame)() PURE;
+	STDMETHOD_(void,RequestVideoFrame)(THIS) PURE;
 
 	// called to request more audio data, data is sent to host with QueueAudioData
 	// 'len' is set to TRUE to notify that audio system has completed playing all audio
 	// this function can be called from another thread
-	STDMETHOD_(void,RequestAudio)(unsigned int len) PURE;
+	STDMETHOD_(void,RequestAudio)(THIS_ unsigned int len) PURE;
 };
 
 // updated decoder interface supported by T2 v1.22+ / SS2 v2.43+
@@ -141,20 +182,22 @@ public:
 #define INTERFACE ILGVideoDecoder2
 DECLARE_INTERFACE_(ILGVideoDecoder2, ILGVideoDecoder)
 {
+#ifdef __cplusplus
 public:
+#endif
 	// ILGVideoDecoder methods
 
-	STDMETHOD_(void,Destroy)() PURE;
-	STDMETHOD_(BOOL,Start)() PURE;
-	STDMETHOD_(BOOL,IsFinished)() PURE;
-	STDMETHOD_(BOOL,IsVideoFrameAvailable)() PURE;
-	STDMETHOD_(void,RequestVideoFrame)() PURE;
-	STDMETHOD_(void,RequestAudio)(unsigned int len) PURE;
+	STDMETHOD_(void,Destroy)(THIS) PURE;
+	STDMETHOD_(BOOL,Start)(THIS) PURE;
+	STDMETHOD_(BOOL,IsFinished)(THIS) PURE;
+	STDMETHOD_(BOOL,IsVideoFrameAvailable)(THIS) PURE;
+	STDMETHOD_(void,RequestVideoFrame)(THIS) PURE;
+	STDMETHOD_(void,RequestAudio)(THIS_ unsigned int len) PURE;
 
 	// ILGVideoDecoder2 methods
 
 	// returns the current playback time in milliseconds (used to better synchronize subtitles)
-	STDMETHOD_(size_t,GetCurrentPlaybackTime)() PURE;
+	STDMETHOD_(size_t,GetCurrentPlaybackTime)(THIS) PURE;
 };
 
 
@@ -171,6 +214,8 @@ extern "C" __declspec(dllexport) ILGVideoDecoder2* CreateLGVideoDecoder2(ILGVide
 
 */
 
+#ifdef _WIN32
 #pragma pack()
+#endif
 
 #endif /* !__LGVIDDECODER_H */
