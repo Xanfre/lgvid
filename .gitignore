@@ -1,4 +1,7 @@
-build
-set-env-vars.sh
 *.o
-*.dll
+*.obj
+*.dll*
+*.exp
+*.lib
+Release
+Debug
