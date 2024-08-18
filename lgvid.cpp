@@ -2160,7 +2160,7 @@ BOOL cLGVideoDecoder::Init(const char *filename)
 #define DLLEXPORT
 #endif
 
-extern "C" DLLEXPORT ILGVideoDecoder2* CreateLGVideoDecoder2(ILGVideoDecoderHost *pHostIface, const char *filename)
+extern "C" DLLEXPORT ILGVideoDecoder2* __cdecl CreateLGVideoDecoder2(ILGVideoDecoderHost *pHostIface, const char *filename)
 {
 	if (!pHostIface || !filename)
 		return NULL;
@@ -2176,7 +2176,7 @@ extern "C" DLLEXPORT ILGVideoDecoder2* CreateLGVideoDecoder2(ILGVideoDecoderHost
 	return p;
 }
 
-extern "C" DLLEXPORT ILGVideoDecoder* CreateLGVideoDecoder(ILGVideoDecoderHost *pHostIface, const char *filename)
+extern "C" DLLEXPORT ILGVideoDecoder* __cdecl CreateLGVideoDecoder(ILGVideoDecoderHost *pHostIface, const char *filename)
 {
 	return CreateLGVideoDecoder2(pHostIface, filename);
 }
