@@ -331,6 +331,7 @@ namespace FFmpeg
 				char s[MAX_PATH];
 				s[0] = 0;
 				GetCurrentDirectory(sizeof(s), s);
+				mprintf("Failed to find/load %s, no movie playback possible (err 0x%X, cwd: %s)", fflibs[i], GetLastError(), s);
 				return FALSE;
 			}
 		}
