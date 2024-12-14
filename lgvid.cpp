@@ -1471,6 +1471,8 @@ private:
 					status = FFmpeg::avcodec_send_packet(audio_ctx, audio_pkt);
 					if (status >= 0 || status == AVERROR(EAGAIN))
 						sent_packet = 1;
+					else
+						break;
 				} else {
 					/* if error, skip frame */
 					// try to avoid inifinite loop if something goes wrong
