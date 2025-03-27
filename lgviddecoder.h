@@ -16,7 +16,7 @@
 
 
 #ifdef _WIN32
-#pragma pack(4)
+#pragma pack(push, 4)
 #endif
 
 #ifndef __cplusplus
@@ -215,7 +215,7 @@ extern "C" __declspec(dllexport) ILGVideoDecoder2* CreateLGVideoDecoder2(ILGVide
 */
 
 #ifdef _WIN32
-#pragma pack()
+#pragma pack(pop)
 #endif
 
 #endif /* !__LGVIDDECODER_H */
