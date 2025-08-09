@@ -512,7 +512,7 @@ fail:
 
 
 #ifdef _WIN32
-#pragma pack(8)
+#pragma pack(push, 8)
 #endif
 
 
@@ -633,8 +633,8 @@ public:
 class cThreadSemaphore : public cThreadSyncObject
 {
 public:
-	cThreadSemaphore(long initialValue, long maxValue) { m_hSyncObject = CreateSemaphore(NULL, initialValue, maxValue, NULL); }
-	BOOL Release(long releaseCount = 1, long * pPreviousCount = NULL) { return ReleaseSemaphore(m_hSyncObject, releaseCount, pPreviousCount); }
+	cThreadSemaphore(LONG initialValue, LONG maxValue) { m_hSyncObject = CreateSemaphore(NULL, initialValue, maxValue, NULL); }
+	BOOL Release(LONG releaseCount = 1, LPLONG pPreviousCount = NULL) { return ReleaseSemaphore(m_hSyncObject, releaseCount, pPreviousCount); }
 };
 
 class cThreadMutex : public cThreadSyncObject
@@ -1630,7 +1630,7 @@ private:
 };
 
 #ifdef _WIN32
-#pragma pack()
+#pragma pack(pop)
 #endif
 
 
