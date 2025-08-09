@@ -145,6 +145,14 @@ public:
 	// EndVideoFrame may stall while waiting for vsync if the frame buffer is the screen
 	STDMETHOD_(void,BeginVideoFrame)(THIS_ void *handle) PURE;
 	STDMETHOD_(void,EndVideoFrame)(THIS) PURE;
+
+	//
+	// Available in T2 v1.28+ / SS2 v2.48+
+	//
+
+	// same as CreateAudioBuffer, but also permits setting a custom bit depth
+	// (8/16/24/32 are supported)
+	STDMETHOD_(BOOL,CreateAudioBuffer2)(int nSampleRate, int nChannels, int nBitsPerSample, int nBufferSize) PURE;
 };
 
 
