@@ -19,7 +19,7 @@ ifneq ($(USE_STD_THREAD),)
 	CPPFLAGS_ALL += -DUSE_STD_THREAD
 endif
 else
-	CXXFLAGS_ALL += -fPIC
+	CXXFLAGS_ALL += -fPIC -fvisibility=hidden
 	CPPFLAGS_ALL += -include comcompat.h -DUSE_STD_THREAD
 endif
 ifneq ($(FFMPEG_ALIGN),)
@@ -41,8 +41,8 @@ endif
 ifeq ($(TARGET_OS),Windows_NT)
 	SONAME ?= lgvid.dll
 else
-	SONAME ?= liblgvid.so
-	LDFLAGS_ALL += -Wl,-soname,$(SONAME)
+	SONAME ?= liblgvid.so.1
+	LDFLAGS_ALL += -Wl,--no-undefined -Wl,-soname,$(SONAME)
 endif
 ifneq ($(STATIC),)
 	LIBS += $(EXTRA_LIBS) -static

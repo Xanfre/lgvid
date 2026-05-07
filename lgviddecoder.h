@@ -103,7 +103,11 @@ public:
 	// read data from file
 	STDMETHOD_(size_t,FileRead)(THIS_ void *handle, void *buf, size_t count) PURE;
 	// move current file read pos
+#ifdef _WIN32
 	STDMETHOD_(size_t,FileSeek)(THIS_ void *handle, long offset, int origin) PURE;
+#else
+	STDMETHOD_(size_t,FileSeek)(THIS_ void *handle, int offset, int origin) PURE;
+#endif
 
 	//
 	// audio buffer access
