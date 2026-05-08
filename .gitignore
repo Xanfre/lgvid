@@ -2,6 +2,7 @@
 *.obj
 *.so
 *.dll*
+*.so*
 *.exp
 *.lib
 Release

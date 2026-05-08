@@ -2,25 +2,19 @@
 
 TARGET ?=
 ifeq ($(TARGET),)
-CXX = g++
+CXX? = g++
 else
 CXX = $(TARGET)-g++
 endif
 
-TARGET_OS ?= $(OS)
+SONAME ?= lgvid.dll
 
 CXXFLAGS_ALL = -O2 $(CXXFLAGS)
 CPPFLAGS_ALL = -std=gnu++11 -Wall -Wextra -DSHIP $(CPPFLAGS)
-LDFLAGS_ALL = $(LDFLAGS)
+LDFLAGS_ALL = -shared -Wl,--strip-all -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase lgvid.def $(LDFLAGS)
 
-ifeq ($(TARGET_OS),Windows_NT)
-	LDFLAGS_ALL += -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase lgvid.def
 ifneq ($(USE_STD_THREAD),)
 	CPPFLAGS_ALL += -DUSE_STD_THREAD
-endif
-else
-	CXXFLAGS_ALL += -fPIC -fvisibility=hidden
-	CPPFLAGS_ALL += -include comcompat.h -DUSE_STD_THREAD
 endif
 ifneq ($(FFMPEG_ALIGN),)
 	CPPFLAGS_ALL += -DFFMPEG_ALIGN=$(FFMPEG_ALIGN)
@@ -38,12 +32,6 @@ else
 LIBS = -lavformat -lavcodec -lavutil -lswscale -lswresample
 endif
 
-ifeq ($(TARGET_OS),Windows_NT)
-	SONAME ?= lgvid.dll
-else
-	SONAME ?= liblgvid.so.1
-	LDFLAGS_ALL += -Wl,--no-undefined -Wl,-soname,$(SONAME)
-endif
 ifneq ($(STATIC),)
 	LIBS += $(EXTRA_LIBS) -static
 endif
@@ -57,4 +45,4 @@ lgvid.o: lgvid.cpp
 	$(CXX) $(CXXFLAGS_ALL) $(CPPFLAGS_ALL) -c -o $@ $<
 
 $(SONAME): lgvid.o
-	$(CXX) $(CXXFLAGS_ALL) -shared $(LDFLAGS_ALL) $^ -o $@ $(LIBS)
+	$(CXX) $(CXXFLAGS_ALL) $(LDFLAGS_ALL) $^ -o $@ $(LIBS)
