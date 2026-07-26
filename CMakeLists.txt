@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(LGVID)
+project(lgvid)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -24,8 +24,8 @@ endif()
 
 include_directories(
 	${FFMPEG_INCLUDE_DIRS}
-	${LGVID_SOURCE_DIR}
-	${LGVID_SOURCE_DIR}/ffmpeg
+	${lgvid_SOURCE_DIR}
+	${lgvid_SOURCE_DIR}/ffmpeg
 )
 
 add_compile_definitions(SHIP)
