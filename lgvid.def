@@ -1,5 +1,0 @@
-LIBRARY lgvid
-
-EXPORTS
-CreateLGVideoDecoder
-CreateLGVideoDecoder2

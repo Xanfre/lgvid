@@ -42,23 +42,20 @@ if (NOT WIN32)
 	add_compile_options("SHELL:-include comcompat.h")
 endif()
 
-if (WIN32)
-	set(LIB_DEFS lgvid.def)
-endif()
-
 add_library(
 	lgvid
 	SHARED
 	lgviddecoder.h
 	lgvid.cpp
-	${LIB_DEFS}
 )
 
 if (NOT FFMPEG_DLL)
 	target_link_libraries(lgvid PRIVATE ${FFMPEG_LIBRARIES})
 endif()
 
-if (NOT WIN32)
+if (WIN32)
+	target_link_options(lgvid PRIVATE "-Wl,--exclude-all-symbols")
+else()
 	target_link_options(lgvid PRIVATE "-Wl,--no-undefined")
 endif()
 

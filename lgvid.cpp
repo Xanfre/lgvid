@@ -2156,9 +2156,9 @@ BOOL cLGVideoDecoder::Init(const char *filename)
 // DLL interface
 //
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define DLLEXPORT __declspec(dllexport)
-#elif !defined(_WIN32) && defined(__GNUC__)
+#elif defined(__GNUC__)
 #define DLLEXPORT __attribute__((visibility("default")))
 #else
 #define DLLEXPORT
