@@ -188,7 +188,7 @@ namespace FFmpeg
 	void (*avformat_close_input)(AVFormatContext **s);
 	int (*avformat_find_stream_info)(AVFormatContext *ic, AVDictionary **options);
 
-	AVIOContext* (*avio_alloc_context)(unsigned char *buffer, int buffer_size, int write_flag, void *opaque, int (*read_packet)(void *opaque, uint8_t *buf, int buf_size), int (*write_packet)(void *opaque, /* const uint8_t *buf */ uint8_t *buf, int buf_size), int64_t (*seek)(void *opaque, int64_t offset, int whence));
+	AVIOContext* (*avio_alloc_context)(unsigned char *buffer, int buffer_size, int write_flag, void *opaque, int (*read_packet)(void *opaque, uint8_t *buf, int buf_size), int (*write_packet)(void *opaque, const uint8_t *buf, int buf_size), int64_t (*seek)(void *opaque, int64_t offset, int whence));
 	void (*avio_context_free)(AVIOContext **s);
 
 	AVPacket* (*av_packet_alloc)(void);
@@ -207,7 +207,7 @@ namespace FFmpeg
 	int (*swr_alloc_set_opts2)(struct SwrContext **ps, const AVChannelLayout *out_ch_layout, enum AVSampleFormat out_sample_fmt, int out_sample_rate, const AVChannelLayout *in_ch_layout, enum AVSampleFormat in_sample_fmt, int in_sample_rate, int log_offset, void *log_ctx);
 	void (*swr_free)(struct SwrContext **s);
 	int (*swr_init)(struct SwrContext *s);
-	int (*swr_convert)(struct SwrContext *s, /* uint8_t *const*out */ uint8_t **out, int out_count, /* const uint8_t *const*in */ const uint8_t **in, int in_count);
+	int (*swr_convert)(struct SwrContext *s, uint8_t *const*out, int out_count, const uint8_t *const*in, int in_count);
 
 	struct SwsContext* (*sws_getCachedContext)(struct SwsContext *context, int srcW, int srcH, enum AVPixelFormat srcFormat, int dstW, int dstH, enum AVPixelFormat dstFormat, int flags, SwsFilter *srcFilter, SwsFilter *dstFilter, const double *param);
 	void (*sws_freeContext)(struct SwsContext *swsContext);
