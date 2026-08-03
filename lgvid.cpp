@@ -225,11 +225,11 @@ namespace FFmpeg
 #else
 	const char *fflibs[5] = {
 		// NOTE: keep up-to-date with the FFmpeg version used
-		"avutil-58.dll",
-		"avformat-60.dll",
-		"avcodec-60.dll",
-		"swresample-4.dll",
-		"swscale-7.dll"
+		"avutil-60.dll",
+		"avformat-62.dll",
+		"avcodec-62.dll",
+		"swresample-6.dll",
+		"swscale-9.dll"
 	};
 	HMODULE hDll[5] = { NULL };
 #endif
