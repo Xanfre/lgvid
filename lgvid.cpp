@@ -162,6 +162,7 @@ public:
 
 namespace FFmpeg
 {
+#ifdef FFMPEG_DLL
 	void* (*av_malloc)(size_t size);
 	void (*av_freep)(void *ptr);
 	int64_t (*av_gettime)(void);
@@ -212,6 +213,58 @@ namespace FFmpeg
 	struct SwsContext* (*sws_getCachedContext)(struct SwsContext *context, int srcW, int srcH, enum AVPixelFormat srcFormat, int dstW, int dstH, enum AVPixelFormat dstFormat, int flags, SwsFilter *srcFilter, SwsFilter *dstFilter, const double *param);
 	void (*sws_freeContext)(struct SwsContext *swsContext);
 	int (*sws_scale)(struct SwsContext *c, const uint8_t* const srcSlice[], const int srcStride[], int srcSliceY, int srcSliceH, uint8_t* const dst[], const int dstStride[]);
+#else
+	using ::av_malloc;
+	using ::av_freep;
+	using ::av_gettime;
+	using ::av_get_bytes_per_sample;
+	using ::av_samples_get_buffer_size;
+	using ::av_channel_layout_check;
+	using ::av_channel_layout_default;
+	using ::av_frame_alloc;
+	using ::av_frame_free;
+#ifndef SHIP
+	using ::av_log_set_callback;
+	using ::av_log_set_level;
+#endif
+
+	using ::av_read_frame;
+	using ::av_find_best_stream;
+	using ::av_probe_input_buffer;
+#ifdef DEBUG
+	using ::av_dump_format;
+#endif
+
+	using ::avformat_alloc_context;
+	using ::avformat_open_input;
+	using ::avformat_close_input;
+	using ::avformat_find_stream_info;
+
+	using ::avio_alloc_context;
+	using ::avio_context_free;
+
+	using ::av_packet_alloc;
+	using ::av_packet_free;
+	using ::av_packet_move_ref;
+	using ::av_packet_unref;
+
+	using ::avcodec_alloc_context3;
+	using ::avcodec_free_context;
+	using ::avcodec_parameters_to_context;
+	using ::avcodec_open2;
+	using ::avcodec_find_decoder;
+	using ::avcodec_send_packet;
+	using ::avcodec_receive_frame;
+
+	using ::swr_alloc_set_opts2;
+	using ::swr_free;
+	using ::swr_init;
+	using ::swr_convert;
+
+	using ::sws_getCachedContext;
+	using ::sws_freeContext;
+	using ::sws_scale;
+#endif
 
 	//
 
@@ -234,30 +287,10 @@ namespace FFmpeg
 	HMODULE hDll[5] = { NULL };
 #endif
 #endif
+
 	cLGVideoDecoder *pOuter = NULL;
 
 	//
-
-#ifdef FFMPEG_DLL
-	#define FIRST_FF_LIB() unsigned int _fflib = 0;
-	#define NEXT_FF_LIB() \
-		if (_fflib + 1 < sizeof(fflibs)/sizeof(fflibs[0])) \
-		{ \
-			_fflib++; \
-		}
-	#define CUR_FF_LIB() fflibs[_fflib]
-	#define INIT_FF_CALL(_name) \
-		if (!((void*&)_name = (void*)GetProcAddress(hDll[_fflib], #_name))) \
-		{ \
-			mprintf("failed to resolve FFmpeg call %s", #_name); \
-			goto fail;\
-		}
-#else
-	#define FIRST_FF_LIB()
-	#define NEXT_FF_LIB()
-	#define CUR_FF_LIB()
-	#define INIT_FF_CALL(_name) _name = :: _name;
-#endif
 
 	static void mprintf(const char *fmt, ...)
 	{
@@ -337,9 +370,22 @@ namespace FFmpeg
 		}
 		if (loaded)
 			return TRUE;
+
+		unsigned int i = 0;
+
+		#define INIT_FF_CALL(_name) \
+			if (!((void*&)_name = (void*)GetProcAddress(hDll[i], #_name))) \
+			{ \
+				mprintf("failed to resolve FFmpeg call %s", #_name); \
+				goto fail;\
+			}
+#ifdef FFMPEG_DLL_COMBINED
+		#define NEXT_FF_LIB()
+#else
+		#define NEXT_FF_LIB() i++
 #endif
 
-		FIRST_FF_LIB(); // libavutil
+		// libavutil or combined
 		INIT_FF_CALL(av_malloc);
 		INIT_FF_CALL(av_freep);
 		INIT_FF_CALL(av_gettime);
@@ -395,6 +441,10 @@ namespace FFmpeg
 		INIT_FF_CALL(sws_freeContext);
 		INIT_FF_CALL(sws_scale);
 
+		#undef INIT_FF_CALL
+		#undef NEXT_FF_LIB
+#endif
+
 #ifndef SHIP
 		if ( pOuter->m_pHostIface->GetConfigValue("ffmpeg_spew", NULL, 0) )
 		{
@@ -408,18 +458,13 @@ namespace FFmpeg
 
 #ifdef FFMPEG_DLL
 fail:
-		mprintf("WARNING: cannot play movie, wrong version of \"%s\"", CUR_FF_LIB());
+		mprintf("WARNING: cannot play movie, wrong version of \"%s\"", fflibs[i]);
 
 		Shutdown();
 
 		return FALSE;
 #endif
 	}
-
-	#undef INIT_FF_CALL
-	#undef NEXT_FF_LIB
-	#undef CUR_FF_LIB
-	#undef INIT_FF_CALL
 
 	//
 	// I/O interface
