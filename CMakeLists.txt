@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
 project(lgvid)
 
+include(GNUInstallDirs)
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -51,6 +53,8 @@ add_library(
 
 if (NOT FFMPEG_DLL)
 	target_link_libraries(lgvid PRIVATE ${FFMPEG_LIBRARIES})
+
+	target_link_directories(lgvid PRIVATE ${FFMPEG_LIBRARY_DIRS})
 endif()
 
 if (WIN32)
