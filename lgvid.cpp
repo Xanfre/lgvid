@@ -792,8 +792,11 @@ int SDL_CondSignal(SDL_cond &cond)
 
 int SDL_CondWait(SDL_cond &cond, cThreadMutex &mutex)
 {
-	std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
+	std::unique_lock<std::mutex> lock(mutex, std::adopt_lock);
+
 	cond.wait(lock);
+
+	lock.release();
 
 	return 0;
 }
