@@ -112,6 +112,7 @@ extern "C"
 static int sws_flags = SWS_BICUBIC;
 static AVSampleFormat out_audio_fmt = AV_SAMPLE_FMT_S16;
 static int out_audio_nb_ch = 2;
+static bool out_keep_ar = false;
 
 
 #ifdef DEBUG
@@ -1812,12 +1813,29 @@ private:
 		ILGVideoDecoderHost::sFrameFormat fmt;
 		is->pOuter->m_pHostIface->GetFrameFormat(fmt);
 
+		int frame_width, frame_height;
 		uint8_t *data[] = { (uint8_t*)lock.buffer, NULL, NULL };
-		int stride[] = {lock.pitch, 0, 0};
+		int stride[] = { lock.pitch, 0, 0 };
+
+		if (out_keep_ar) {
+			frame_width = fmt.width;
+			frame_height = (fmt.width * is->video_ctx->height) / is->video_ctx->width;
+
+			if (frame_height > fmt.height) {
+				frame_height = fmt.height;
+				frame_width = (fmt.height * is->video_ctx->width) / is->video_ctx->height;
+			}
+
+			memset(data[0], 0, stride[0] * fmt.height);
+			data[0] += (((fmt.height - frame_height) / 2) * stride[0]) + (((fmt.width - frame_width) / 2) * (fmt.bpp / 8));
+		} else {
+			frame_width = fmt.width;
+			frame_height = fmt.height;
+		}
 
 		is->img_convert_ctx = FFmpeg::sws_getCachedContext(is->img_convert_ctx,
 			is->video_ctx->width, is->video_ctx->height, is->video_ctx->pix_fmt,
-			fmt.width, fmt.height, is->pict_pix_fmt,
+			frame_width, frame_height, is->pict_pix_fmt,
 			sws_flags, NULL, NULL, NULL);
 
 		FFmpeg::sws_scale(is->img_convert_ctx, pFrame->data,
@@ -2138,6 +2156,8 @@ BOOL cLGVideoDecoder::Init(const char *filename)
 			out_audio_nb_ch = 2;
 		}
 	}
+
+	out_keep_ar = !!m_pHostIface->GetConfigValue("movie_keep_aspect_ratio", NULL, 0);
 
 	if ( !FFmpeg::Init(this) )
 		return FALSE;
