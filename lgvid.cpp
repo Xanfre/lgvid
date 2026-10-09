@@ -166,8 +166,8 @@ namespace FFmpeg
 #ifdef FFMPEG_DLL
 	void* (*av_malloc)(size_t size);
 	void (*av_freep)(void *ptr);
-	int64_t (*av_gettime)(void);
 	int (*av_get_bytes_per_sample)(enum AVSampleFormat sample_fmt);
+	int64_t (*av_gettime_relative)(void);
 	int (*av_samples_get_buffer_size)(int *linesize, int nb_channels, int nb_samples, enum AVSampleFormat sample_fmt, int align);
 	int (*av_channel_layout_check)(const AVChannelLayout *channel_layout);
 	void (*av_channel_layout_default)(AVChannelLayout *ch_layout, int nbchannels);
@@ -217,8 +217,8 @@ namespace FFmpeg
 #else
 	using ::av_malloc;
 	using ::av_freep;
-	using ::av_gettime;
 	using ::av_get_bytes_per_sample;
+	using ::av_gettime_relative;
 	using ::av_samples_get_buffer_size;
 	using ::av_channel_layout_check;
 	using ::av_channel_layout_default;
@@ -389,7 +389,7 @@ namespace FFmpeg
 		// libavutil or combined
 		INIT_FF_CALL(av_malloc);
 		INIT_FF_CALL(av_freep);
-		INIT_FF_CALL(av_gettime);
+		INIT_FF_CALL(av_gettime_relative);
 		INIT_FF_CALL(av_get_bytes_per_sample);
 		INIT_FF_CALL(av_samples_get_buffer_size);
 		INIT_FF_CALL(av_channel_layout_check);
@@ -1039,7 +1039,7 @@ struct VideoState
 	{
 		void *bmp;
 		double pts;				///<presentation time stamp for this picture
-		double target_clock;	///<av_gettime() time at which this should be displayed ideally
+		double target_clock;	///<av_gettime_relative() time at which this should be displayed ideally
 		int64_t pos;			///<byte position in file
 	};
 
@@ -1078,9 +1078,9 @@ struct VideoState
 	double          frame_last_delay;
 	double          video_clock; ///<pts of last decoded frame / predicted pts of next decoded frame
 	double          video_current_pts; ///<current displayed pts (different from video_clock if frame fifos are used)
-	double          video_current_pts_drift; ///<video_current_pts - time (av_gettime) at which we updated video_current_pts - used to have running video pts
+	double          video_current_pts_drift; ///<video_current_pts - time (av_gettime_relative) at which we updated video_current_pts - used to have running video pts
 	int64_t         video_current_pos; ///<current displayed file pos
-	int64_t         video_current_pts_time;  ///<time (av_gettime) at which we updated video_current_pts - used to have running video pts
+	int64_t         video_current_pts_time;  ///<time (av_gettime_relative) at which we updated video_current_pts - used to have running video pts
 	AVCodecContext  *video_ctx;
 	PacketQueue     videoq;
 
@@ -1176,12 +1176,12 @@ struct VideoState
 
 	double get_video_clock() const
 	{
-		return video_current_pts_drift + FFmpeg::av_gettime() / 1000000.0;
+		return video_current_pts_drift + FFmpeg::av_gettime_relative() / 1000000.0;
 	}
 
 	double get_external_clock() const
 	{
-		const int64_t ti = FFmpeg::av_gettime();
+		const int64_t ti = FFmpeg::av_gettime_relative();
 		return external_clock + ((ti - external_clock_time) * 1e-6);
 	}
 
@@ -1306,7 +1306,7 @@ struct VideoState
 		if (video_ctx) {
 retry:
 			if (pictq_size != 0) {
-				double time = FFmpeg::av_gettime()/1000000.0;
+				double time = FFmpeg::av_gettime_relative()/1000000.0;
 				double next_target;
 
 				/* dequeue the picture */
@@ -1901,7 +1901,7 @@ BOOL VideoState::Play()
 
 	FFmpeg::av_packet_unref(audio_pkt);
 
-	const int64_t curtime = FFmpeg::av_gettime();
+	const int64_t curtime = FFmpeg::av_gettime_relative();
 
 	frame_timer = (double)curtime / 1000000.0;
 	frame_last_delay = 40e-3;
