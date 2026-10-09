@@ -99,8 +99,8 @@ extern "C"
 #endif
 
 
-#define AUDIO_BUFFER_SIZE 16*1024
-#define MIN_AUDIOQ_SIZE (20 * 16 * 1024)
+#define AUDIO_BUFFER_SIZE (out_audio_depth * 1024)
+#define MIN_AUDIOQ_SIZE (20 * out_audio_depth * 1024)
 #define MIN_FRAMES 5
 #define AV_SYNC_THRESHOLD 0.01
 #define AV_NOSYNC_THRESHOLD 10.0
@@ -111,6 +111,7 @@ extern "C"
 
 static int sws_flags = SWS_BICUBIC;
 static AVSampleFormat out_audio_fmt = AV_SAMPLE_FMT_S16;
+static int out_audio_depth = 16;
 static int out_audio_nb_ch = 2;
 static bool out_keep_ar = false;
 
@@ -166,7 +167,6 @@ namespace FFmpeg
 #ifdef FFMPEG_DLL
 	void* (*av_malloc)(size_t size);
 	void (*av_freep)(void *ptr);
-	int (*av_get_bytes_per_sample)(enum AVSampleFormat sample_fmt);
 	int64_t (*av_gettime_relative)(void);
 	int (*av_samples_get_buffer_size)(int *linesize, int nb_channels, int nb_samples, enum AVSampleFormat sample_fmt, int align);
 	int (*av_channel_layout_check)(const AVChannelLayout *channel_layout);
@@ -217,7 +217,6 @@ namespace FFmpeg
 #else
 	using ::av_malloc;
 	using ::av_freep;
-	using ::av_get_bytes_per_sample;
 	using ::av_gettime_relative;
 	using ::av_samples_get_buffer_size;
 	using ::av_channel_layout_check;
@@ -390,7 +389,6 @@ namespace FFmpeg
 		INIT_FF_CALL(av_malloc);
 		INIT_FF_CALL(av_freep);
 		INIT_FF_CALL(av_gettime_relative);
-		INIT_FF_CALL(av_get_bytes_per_sample);
 		INIT_FF_CALL(av_samples_get_buffer_size);
 		INIT_FF_CALL(av_channel_layout_check);
 		INIT_FF_CALL(av_channel_layout_default);
@@ -1160,8 +1158,7 @@ struct VideoState
 		hw_buf_size = audio_buf_size - audio_buf_index;
 		bytes_per_sec = 0;
 		if (audio_ctx) {
-			bytes_per_sec = audio_ctx->sample_rate *
-				FFmpeg::av_get_bytes_per_sample(out_audio_fmt) * audio_ctx->ch_layout.nb_channels;
+			bytes_per_sec = audio_ctx->sample_rate * (out_audio_depth / 8) * audio_ctx->ch_layout.nb_channels;
 		}
 		if (bytes_per_sec)
 			pts -= (double)hw_buf_size / bytes_per_sec;
@@ -1446,7 +1443,7 @@ private:
 		int n;
 		double ref_clock;
 
-		n = FFmpeg::av_get_bytes_per_sample(out_audio_fmt) * audio_ctx->ch_layout.nb_channels;
+		n = (out_audio_depth / 8) * audio_ctx->ch_layout.nb_channels;
 
 		if (av_sync_type != AV_SYNC_AUDIO_MASTER) {
 			double diff, avg_diff;
@@ -1553,7 +1550,7 @@ private:
 				}
 
 				if (avr_context) {
-					int sample_size = FFmpeg::av_get_bytes_per_sample(out_audio_fmt) * out_audio_nb_ch; // 8/16/32 bit, mono/stereo
+					int sample_size = (out_audio_depth / 8) * out_audio_nb_ch; // 8/16/32 bit, mono/stereo
 					int sample_count = audio_frame->nb_samples;
 					data_size = sample_size * audio_frame->nb_samples;
 
@@ -1575,7 +1572,7 @@ private:
 
 				pts = audio_clock;
 				*pts_ptr = pts;
-				n = FFmpeg::av_get_bytes_per_sample(out_audio_fmt) * audio_ctx->ch_layout.nb_channels;
+				n = (out_audio_depth / 8) * audio_ctx->ch_layout.nb_channels;
 				audio_clock += (double)data_size / (double)(n * audio_ctx->sample_rate);
 
 				/* We have data, return it and come back for more later */
@@ -1964,7 +1961,7 @@ int VideoState::stream_component_open(int stream_index)
 	{
 	case AVMEDIA_TYPE_AUDIO:
 		{
-			if ( !pOuter->m_pHostIface->CreateAudioBuffer(codecCtx->sample_rate, out_audio_nb_ch, AUDIO_BUFFER_SIZE) )
+			if ( !pOuter->m_pHostIface->CreateAudioBuffer2(codecCtx->sample_rate, out_audio_nb_ch, out_audio_depth, AUDIO_BUFFER_SIZE) )
 				break;
 
 			audioStream = stream_index;
@@ -2130,17 +2127,18 @@ BOOL cLGVideoDecoder::Init(const char *filename)
 	}
 
 	out_audio_fmt = AV_SAMPLE_FMT_S16;
+	out_audio_depth = 16;
 	memset(buf, 0, sizeof(buf));
-	if ( m_pHostIface->GetConfigValue("movie_max_sample_depth", buf, sizeof(buf)) )
+	if ( m_pHostIface->GetConfigValue("movie_sample_depth", buf, sizeof(buf)) )
 	{
 		switch (atoi(buf))
 		{
-		case 8:  out_audio_fmt = AV_SAMPLE_FMT_U8; break;
-		case 16: out_audio_fmt = AV_SAMPLE_FMT_S16; break;
+		case 8:  out_audio_fmt = AV_SAMPLE_FMT_U8; out_audio_depth = 8; break;
+		case 16: out_audio_fmt = AV_SAMPLE_FMT_S16; out_audio_depth = 16; break;
 		case 24:
-		case 32: out_audio_fmt = AV_SAMPLE_FMT_S32; break;
+		case 32: out_audio_fmt = AV_SAMPLE_FMT_S32; out_audio_depth = 32; break;
 		default:
-			out_audio_fmt = AV_SAMPLE_FMT_S16;
+			out_audio_fmt = AV_SAMPLE_FMT_S16; out_audio_depth = 16;
 		}
 	}
 
