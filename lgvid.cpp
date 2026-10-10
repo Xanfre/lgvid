@@ -1906,7 +1906,7 @@ BOOL VideoState::Play()
 	video_current_pos = 0;
 	video_current_pts_time = curtime;
 
-	external_clock_time = curtime;
+	external_clock_time = 0;
 	external_clock = 0;
 	skip_frames = 0;
 	skip_frames_index = 0;
