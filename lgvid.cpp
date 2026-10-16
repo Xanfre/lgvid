@@ -38,6 +38,8 @@
 #endif
 #endif
 
+#include <cstdlib>
+#include <cstring>
 #include <new>
 #if __cplusplus >= 201103L && defined(USE_STD_THREAD)
 #include <condition_variable>
@@ -109,11 +111,12 @@ extern "C"
 #define VIDEO_PICTURE_QUEUE_SIZE 2
 #define DEFAULT_AV_SYNC_TYPE AV_SYNC_EXTERNAL_MASTER
 
+static int sync_type = -1;
 static int sws_flags = SWS_BICUBIC;
 static AVSampleFormat out_audio_fmt = AV_SAMPLE_FMT_S16;
 static int out_audio_depth = 16;
 static int out_audio_nb_ch = 2;
-static bool out_keep_ar = false;
+static bool out_video_keep_ar = false;
 
 
 #ifdef DEBUG
@@ -1814,7 +1817,7 @@ private:
 		uint8_t *data[] = { (uint8_t*)lock.buffer, NULL, NULL };
 		int stride[] = { lock.pitch, 0, 0 };
 
-		if (out_keep_ar) {
+		if (out_video_keep_ar) {
 			frame_width = fmt.width;
 			frame_height = (fmt.width * is->video_ctx->height) / is->video_ctx->width;
 
@@ -1906,7 +1909,7 @@ BOOL VideoState::Play()
 	video_current_pos = 0;
 	video_current_pts_time = curtime;
 
-	external_clock_time = 0;
+	external_clock_time = curtime;
 	external_clock = 0;
 	skip_frames = 0;
 	skip_frames_index = 0;
@@ -2036,7 +2039,11 @@ STDMETHODIMP_(BOOL) cLGVideoDecoder::Start()
 	if (!is)
 		return FALSE;
 
-	is->av_sync_type = VideoState::DEFAULT_AV_SYNC_TYPE;
+	is->av_sync_type = sync_type == (int) VideoState::AV_SYNC_AUDIO_MASTER
+			|| sync_type == (int) VideoState::AV_SYNC_VIDEO_MASTER
+			|| sync_type == (int) VideoState::AV_SYNC_EXTERNAL_MASTER
+		? (VideoState::AV_SYNC) sync_type
+		: VideoState::DEFAULT_AV_SYNC_TYPE;
 
 	return is->Play();
 }
@@ -2102,7 +2109,19 @@ BOOL cLGVideoDecoder::Init(const char *filename)
 {
 	char buf[16] = {0,};
 
+	sync_type = VideoState::DEFAULT_AV_SYNC_TYPE;
+	if ( m_pHostIface->GetConfigValue("movie_sync_type", buf, sizeof(buf)) )
+	{
+		if (!strcmp(buf, "audio"))
+			sync_type = VideoState::AV_SYNC_AUDIO_MASTER;
+		else if (!strcmp(buf, "video"))
+			sync_type = VideoState::AV_SYNC_VIDEO_MASTER;
+		else if (!strcmp(buf, "external"))
+			sync_type = VideoState::AV_SYNC_EXTERNAL_MASTER;
+	}
+
 	sws_flags = SWS_BICUBIC;
+	memset(buf, 0, sizeof(buf));
 	if ( m_pHostIface->GetConfigValue("movie_sw_scale_quality", buf, sizeof(buf)) )
 	{
 		sws_flags = atoi(buf);
@@ -2155,7 +2174,7 @@ BOOL cLGVideoDecoder::Init(const char *filename)
 		}
 	}
 
-	out_keep_ar = !!m_pHostIface->GetConfigValue("movie_keep_aspect_ratio", NULL, 0);
+	out_video_keep_ar = !!m_pHostIface->GetConfigValue("movie_keep_aspect_ratio", NULL, 0);
 
 	if ( !FFmpeg::Init(this) )
 		return FALSE;
